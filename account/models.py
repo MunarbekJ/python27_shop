@@ -17,6 +17,7 @@ class UserManager(BaseUserManager):
         user.create_activation_code()
         send_activation_code(user.email, user.activation_code) #отправляем на почту
         user.save(using=self._db)  # созраняем юзера в бд
+        Billing.objects.create(user=user)
         return user
 
     def create_superuser(self, email, password, phone, **kwargs):
@@ -53,6 +54,22 @@ class User(AbstractUser):
         self.activation_code = code
         self.save()
 
+class Billing(models.Model):
+    user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='billing')
+    amount = models.DecimalField(max_digits=10, decimal_places=2, default=0)
+    
+    def top_up(self, amount): 
+        'если транзакция прошла успешно, вернется True'
+        if amount > 0:
+            self.amount += amount
+            self.save()
+            return True
+        return False
 
-
-
+    def withdraw(self, amount):
+        '''снятие денег сщ счета если транзакция успешно то вернется True'''
+        if self.amount >= amount:
+            self.amount -= amount
+            self.save()
+            return True
+        return False
