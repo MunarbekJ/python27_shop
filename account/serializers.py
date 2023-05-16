@@ -32,3 +32,17 @@ class BillingSerializer(serializers.ModelSerializer):
     class Meta:
         model = Billing
         fields = ('amount',)
+
+
+class ProfileSerializer(serializers.ModelSerializer):
+
+    class Meta:
+        model = User
+        fields = ("id", "email", "phone", "bio")
+
+
+    def to_representation(self, instance: User):
+        rep = super().to_representation(instance)
+        # return super().to_representation(instance)
+        rep["billing"] = instance.billing.amount
+        return rep

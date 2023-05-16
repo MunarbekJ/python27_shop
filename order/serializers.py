@@ -1,16 +1,46 @@
-from rest_framework.serializers import ModelSerializer
+from rest_framework.serializers import ModelSerializer, BooleanField, ValidationError
 from drf_writable_nested import WritableNestedModelSerializer
 from .models import Order, OrderItem
 
 class OrderItemSerializer(ModelSerializer):
     class Meta:
         model = OrderItem
-        exclube = ("order",)
+        exclude = ("order",)
 
 class OrderSerializer(WritableNestedModelSerializer, ModelSerializer):
     items = OrderItemSerializer(many=True)
+    is_paid = BooleanField(read_only=True)
 
 
-class Meta:
-    model = Order
-    fields = ("user", )
+    class Meta:
+        model = Order
+        fields = ("id", "items", "is_pead", "created_ad", "total_price")
+    
+    def create(self, validated_data):
+        validated_data["user"] = self.context.get("request").user
+        for item in validated_data["items"]:
+            item.product.quantity -= item.quantity
+            item.product.save()
+        return super().create(validated_data)
+    
+
+    def validate_items(self, items):
+        # print(items)
+        # return items
+        for item in items:
+            if item.quantity  > item.get("product").quantity:
+                raise ValidationError("not enough products")
+            return items
+        
+    # def create(self, validated_data):
+    #     validated_data["user"] = self.context.get("request").user
+    #     for item in validated_data["items"]:
+    #         item["product"].quantity -= item["quantity"]
+    #         item["product"].save()
+    #     return super().create(validated_data)
+
+    # def validate_items(self, items):
+    #         for item in items:
+    #         if item["quantity"] > item["product"].quantity:
+    #         raise ValidationError("not enough products")
+    #     return items

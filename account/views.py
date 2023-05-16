@@ -5,8 +5,12 @@ from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
 from drf_yasg.utils import swagger_auto_schema
 
-from .serializers import RegisterUserSerializer, BillingSerializer
+from .serializers import RegisterUserSerializer, BillingSerializer, ProfileSerializer
+from rest_framework import mixins
+from rest_framework.viewsets import ModelViewSet
 from .models import User
+
+
 
 
 class RegisterUserView(APIView):
@@ -42,3 +46,6 @@ class TopUpBillingView(APIView):
             return Response(status=200)
         return Response("invalid amount", status=400)
         
+class ProfileViewset(ModelViewSet):
+    queryset = User.objects.all()
+    serializer_class = ProfileSerializer
